@@ -8,16 +8,29 @@ from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 # load the dataset
-dataframe = read_csv('international-airline-passengers.csv', usecols=[1], engine='python', skipfooter=3)
-dataset=dataframe.values
+#dataframe = read_csv('international-airline-passengers.csv', usecols=[1], engine='python', skipfooter=3)
+
+
+from pandas import datetime
+def parser(x):
+	return datetime.strptime('190'+x, '%Y-%m')
+dataframe = read_csv('shampoo-sales.csv', header=0, parse_dates=[0], index_col=0, squeeze=True, date_parser=parser)
+
+
+dataset = dataframe.values
+
+
+dataset=dataset.reshape(-1,1)
+
+
 # 将整型变为float
 dataset = dataset.astype('float32')
 print(dataset)
 tick=numpy.linspace(0,132,12)
 #plt.xticks(tick)
-#plt.plot(dataset)
+plt.plot(dataset)
 #plt.grid()
-#plt.show()
+plt.show()
 
 # X is the number of passengers at a given time (t) and Y is the number of passengers at the next time (t + 1).
 
@@ -39,7 +52,7 @@ dataset = scaler.fit_transform(dataset)
 
 
 # split into train and test sets
-train_size = int(len(dataset) * 0.67)
+train_size = int(len(dataset) * 0.5)
 test_size = len(dataset) - train_size
 train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 

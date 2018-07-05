@@ -8,7 +8,7 @@ from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 # load the dataset
-dataframe = read_csv('international-airline-passengers.csv', usecols=[1], engine='python', skipfooter=3)
+dataframe = read_csv('mmt.csv', usecols=[1], engine='python', skipfooter=3)
 dataset=dataframe.values
 # 将整型变为float
 dataset = dataset.astype('float32')
