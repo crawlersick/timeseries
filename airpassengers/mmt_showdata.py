@@ -47,18 +47,25 @@ def predict_diff_recover(predict_value, d):
         tmp_data.dropna(inplace=True)
     return tmp_data # return numpy.exp(tmp_data)也可以return到最原始，tmp_data是对原始数据取对数的结果
 
-
-
-
 dateparse = lambda dates:datetime.strptime(dates,'%Y-%m')
-data=read_csv('AirPassengers.csv',parse_dates=[0],index_col=0,date_parser=dateparse);
-#data=read_csv('mmt.csv',parse_dates=[0],index_col=0,date_parser=dateparse);
+#data=read_csv('AirPassengers.csv',parse_dates=[0],index_col=0,date_parser=dateparse);
+data=read_csv('mmt.csv',parse_dates=[0],index_col=0,date_parser=dateparse);
 #data=read_csv('AirPassengers.csv');
 #print(data.head())
 ts=data['#Passengers']
+
+ts = numpy.array(ts, dtype=numpy.float64)
+
+for i in range(ts.size):
+    print(ts[i])
+    print(type(ts[i]))
+    ts[i]=float(ts[i])
+    print(ts[i])
+    print(type(ts[i]))
+
+
 pyplot.plot(data)
 pyplot.show()
-
 
 def rolling_statistics(timeseries):
     #Determing rolling statistics
@@ -87,25 +94,6 @@ def adf_test(timeseries):
 
 adf_test(ts)
 
-ts_log=numpy.log(ts)
-adf_test(ts_log)
-
-#ts_log_diff=ts_log-ts_log.shift(periods=1)
-#ts_log_diff.dropna(inplace=True)
-
-ts_log_diff=diff_ts(ts_log,[1])
-
-adf_test(ts_log_diff)
-
-ts_log_diff2=ts_log_diff-ts_log_diff.shift(periods=1)
-ts_log_diff2.dropna(inplace=True)
-adf_test(ts_log_diff2)
-
-pyplot.plot(ts_log_diff2)
-pyplot.show()
-
-
-
 def _proper_model(ts_log_diff, maxLag):
     best_p = 0
     best_q = 0
@@ -126,29 +114,30 @@ def _proper_model(ts_log_diff, maxLag):
                 best_bic = bic
                 best_model = results_ARMA
     return best_p,best_q,best_model
-#p,q,bm=_proper_model(ts_log_diff, 10) #对一阶差分求最优p和q
+#p,q,bm=_proper_model(ts, 10) 
 #print(p)
 #print(q)
-# p=8, q=9
+# p=0, q=0
 
-model=ARIMA(ts_log,order=(8,1,9))
+#0 0 出现横线。。。。转 1 1
+model=ARIMA(ts,order=(1,0,1))
 results_ARIMA=model.fit(disp=-1)
 
-pyplot.plot(ts_log_diff)
+pyplot.plot(ts)
 pyplot.plot(results_ARIMA.fittedvalues, color='red')#和下面这句结果一样
 pyplot.plot(results_ARIMA.predict(), color='black')#predict得到的就是fittedvalues，只是差分的结果而已。还需要继续回退
-pyplot.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
+pyplot.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts)**2))
 pyplot.show()
 
 predict_ts=results_ARIMA.predict()
-diff_recover_ts=predict_diff_recover(predict_ts,[1])
-log_recover=numpy.exp(diff_recover_ts)
+#diff_recover_ts=predict_diff_recover(predict_ts,[1])
+#log_recover=numpy.exp(diff_recover_ts)
 #绘图
 #ts = ts[log_recover.index]#排除空的数据
 pyplot.plot(ts,color="blue",label='Original')
-pyplot.plot(log_recover,color='red',label='Predicted')
+pyplot.plot(predict_ts,color='red',label='Predicted')
 pyplot.legend(loc='best')
-pyplot.title('RMSE: %.4f'% numpy.sqrt(sum((log_recover-ts)**2)/len(ts)))#RMSE,残差平方和开根号，即标准差
+pyplot.title('RMSE: %.4f'% numpy.sqrt(sum((predict_ts-ts)**2)/len(ts)))#RMSE,残差平方和开根号，即标准差
 pyplot.show()
 
 
@@ -158,7 +147,6 @@ forecast_n=12
 forecast_ARIMA_log=results_ARIMA.forecast(forecast_n)
 forecast_ARIMA_log=forecast_ARIMA_log[0]
 print(forecast_ARIMA_log)
-
 
 #定义获取连续时间，start是起始时间，limit是连续的天数,level可以是day,month,year
 import arrow
@@ -171,14 +159,11 @@ def get_date_range(start, limit, level='month',format='YYYY-MM-DD'):
 
 
 # 预测从1961-01-01开始，也就是我们训练数据最后一个数据的后一个日期
-new_index = get_date_range('1961-01-01', forecast_n)
+new_index = get_date_range('1971-07-01', forecast_n)
 forecast_ARIMA_log = pd.Series(forecast_ARIMA_log, copy=True, index=new_index)
-print(forecast_ARIMA_log.head())
-
-# 直接取指数，即可恢复至原数据
-forecast_ARIMA = numpy.exp(forecast_ARIMA_log)
+forecast_ARIMA = forecast_ARIMA_log
 print(forecast_ARIMA)
-pyplot.plot(ts,label='Original',color='blue')
+pyplot.plot(data,label='Original',color='blue')
 pyplot.plot(forecast_ARIMA, label='Forcast',color='red')
 pyplot.legend(loc='best')
 pyplot.title('forecast')
