@@ -93,12 +93,12 @@ adf_test(ts_log)
 #ts_log_diff=ts_log-ts_log.shift(periods=1)
 #ts_log_diff.dropna(inplace=True)
 
-ts_log_diff=diff_ts(ts_log,[1])
+ts_log_diff2=diff_ts(ts_log,[1,1])
 
-adf_test(ts_log_diff)
+#adf_test(ts_log_diff)
 
-ts_log_diff2=ts_log_diff-ts_log_diff.shift(periods=1)
-ts_log_diff2.dropna(inplace=True)
+#ts_log_diff2=ts_log_diff-ts_log_diff.shift(periods=1)
+#ts_log_diff2.dropna(inplace=True)
 adf_test(ts_log_diff2)
 
 pyplot.plot(ts_log_diff2)
@@ -106,14 +106,14 @@ pyplot.show()
 
 
 
-def _proper_model(ts_log_diff, maxLag):
+def _proper_model(ts, maxLag):
     best_p = 0
     best_q = 0
     best_model=None
     best_bic = 0
     for p in numpy.arange(maxLag):
         for q in numpy.arange(maxLag):
-            model = ARMA(ts_log_diff, order=(p, q))
+            model = ARMA(ts, order=(p, q))
             try:
                 results_ARMA = model.fit(disp=-1)
             except:
@@ -126,30 +126,28 @@ def _proper_model(ts_log_diff, maxLag):
                 best_bic = bic
                 best_model = results_ARMA
     return best_p,best_q,best_model
-#p,q,bm=_proper_model(ts_log_diff, 10) #对一阶差分求最优p和q
+#p,q,bm=_proper_model(ts_log_diff2, 10) #对一阶差分求最优p和q
+#print('arima parameters:')
 #print(p)
 #print(q)
-# p=8, q=9
+# p=9, q=9
 
-model=ARIMA(ts_log,order=(8,1,9))
-#model=ARIMA(ts_log,order=(p,1,q))
+model=ARIMA(ts_log,order=(9,1,9))
+#model=ARIMA(ts_log,order=(p,2,q))
 results_ARIMA=model.fit(disp=-1)
 
-pyplot.plot(ts_log_diff)
+pyplot.plot(ts_log_diff2)
 pyplot.plot(results_ARIMA.fittedvalues, color='red')#和下面这句结果一样
 pyplot.plot(results_ARIMA.predict(), color='black')#predict得到的就是fittedvalues，只是差分的结果而已。还需要继续回退
-pyplot.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
+pyplot.title('RSS: %.4f'% sum((results_ARIMA.fittedvalues-ts_log_diff2)**2))
 pyplot.show()
-
-
 
 predict_ts=results_ARIMA.predict()
 
-print('instance check for predict_ts:')
-print(isinstance(predict_ts, numpy.ndarray))
+print(predict_ts)
+print(type(predict_ts))
 
-diff_recover_ts=predict_diff_recover(predict_ts,[1])
-print(type(diff_recover_ts))
+diff_recover_ts=predict_diff_recover(predict_ts,[1,1])
 log_recover=numpy.exp(diff_recover_ts)
 #绘图
 #ts = ts[log_recover.index]#排除空的数据
